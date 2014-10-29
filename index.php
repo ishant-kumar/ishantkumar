@@ -5,7 +5,7 @@ echo "<br><hr>";
 echo "The time is ..." . date("h:i:sa");
 echo "<br><hr>";
 
-echo "Version of App is 1.4";
+echo "Version of App is 1.5";
 echo "<br><hr>";
 
 
