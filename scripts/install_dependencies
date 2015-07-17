@@ -1,4 +1,4 @@
 #!/bin/bash
-apt-get install -y nginx
+yum install -y nginx
 rm -f /usr/share/nginx/html/index.html
 
