@@ -1,0 +1,664 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "PSDKAPI STAGE Web Stack in VPC",
+    "Parameters": {
+        "AmazonMachineImageId": {
+            "Description": "Default AMI to use when spinning up instance (i.e. : ami-a9741ac0). Make sure that this account has rights to that AMI",
+            "Type": "String",
+            "Default": "ami-6869aa05"
+        },
+        "AWSAccountId": {
+            "Description": "The Amazon AWS Account Id for this group (i.e. 303225888019)",
+            "Type": "String",
+            "Default": "12345"
+        },
+        "AvailabilityZone": {
+            "Description": "Availability zone to launch instances in. Note that this can vary per account (i.e. us-east-1a,us-east-1b,us-east-1d)",
+            "Type": "CommaDelimitedList",
+            "Default": "us-east-1b,us-east-1c,us-east-1a,us-east-1d"
+        },
+        "ChefAWSAccessKey": {
+            "Description": "IAM AWS access key with enough rights to access ChefBucket",
+            "Type": "String",
+            "Default": "___DO NOT NEED USING ROLES___"
+        },
+        "ChefAWSSecretKey": {
+            "Description": "IAM AWS secret key with enough rights to access ChefBucket",
+            "Type": "String",
+            "Default": "___DO NOT NEED USING ROLES___"
+        },
+        "ChefBucket": {
+            "Description": "S3 bucket that stores the required Chef-related keys (i.e. adobe-cloudops-cc-chef-ue1)",
+            "Type": "String",
+            "Default": "adobe-cloudops-psdkapi-chef-ue1"
+        },
+        "ChefEnv": {
+            "Description": "Default Chef Environment of this instance (i.e. CC-STAGE-UE1-A)",
+            "Type": "String",
+            "Default": "PSDKAPI-STAGE-UE1-A"
+        },
+        "ChefOrg": {
+            "Description": "Default Chef Organization of this instance (i.e. adobestormcloud)",
+            "Type": "String",
+            "Default": "adobepsdkapi"
+        },
+        "ChefRole": {
+            "Description": "Default Chef Role of this instance (i.e. Web)",
+            "Type": "String",
+            "Default": "AppServer"
+        },
+        "ExternalELB": {
+            "Description": "Default ELB to attach to. Create the ELB in advance",
+            "Type": "String",
+            "Default": "test-elb"
+        },
+	"InternalELB": {
+            "Description": "Default ELB to attach to. Create the ELB in advance",
+            "Type": "String",
+            "Default": "test-elb"
+        },
+        "InstanceType": {
+            "Description": "Type of EC2 instance to launch (i.e. m1.xlarge)",
+            "Type": "String",
+            "Default": "t2.micro"
+        },
+        "IamInstanceProfile": {
+            "Description": "IAM instance profile",
+            "Type": "String",
+            "Default": "psdkapi-web"
+        },
+        "KeyPairName": {
+            "Description": "Name of an existing EC2 KeyPair (i.e. cloudops-app-stage-ue1)",
+            "Type": "String",
+            "Default": "ishant-project"
+        },
+		  "WebServerPort" : { 
+				"Description" : "The TCP port for the Web Server",
+				"Type" : "String",
+				"Default" : "80"
+			},
+		"prisubnets" : {
+		    "Description" : "The availiability zones available",
+			"Type" : "CommaDelimitedList",
+			"Default" : "subnet-9c1329b6,subnet-ba444f87,subnet-e7e7ddbf,subnet-edc62ca4" 
+		},
+		"vpcid" : {
+			"Description" : "VPC where the instances will be launched ",
+			"Type" : "String",
+			"Default" : "vpc-4b99ff2c"
+		},	
+        "ScalingSNSTopicName": {
+            "Description": "Name of the scaling SNS topic configured to received autoscaling events (i.e. stormcloud-stage-ue1-autoscaling)",
+            "Type": "String",
+            "Default": "test-ue1-autoscaling"
+        },
+        "SecurityGroups": {
+            "Description": "Security group that is used by this group. By default, it should belong to at least 4 securty groups (i.e. adobe-ssh, stormcloud, stormcloud-ccapi, stormcloud-ccweb, stormcloud-common)",
+            "Type": "CommaDelimitedList",
+            "Default": "sg-eec1af93"
+        },
+        "ASGDesiredCapacity": {
+            "Description": "Auto Scaling Group Desired size of the stack (must be between ASGMinSize and ASGMaxSize)",
+            "Type": "Number",
+            "Default": "1"
+        },
+        "ASGMinSize": {
+            "Description": "Auto Scaling Group Minimum size of the stack (i.e. 1)",
+            "Type": "Number",
+            "Default": "1"
+        },
+        "ASGMaxSize": {
+            "Description": "Auto Scaling Group Maximum size of the stack (i.e. 1). See https://zerowing.corp.adobe.com/display/saas/App+Management+-+AWS+Service+Limits and make sure to adjust your limits",
+            "Type": "Number",
+            "Default": "1"
+        },
+        "ScalingAdjustmentAdjustDown": {
+            "Description": "The number of instances by which to downscale. (i.e. -1 = remove 1 server at a time)",
+            "Type": "Number",
+            "Default": "-1"
+        },
+        "ScalingAdjustmentAdjustUp": {
+            "Description": "The number of instances by which to upscale. (i.e. 1 = add 1 server at a time)",
+            "Type": "Number",
+            "Default": "3"
+        },
+        "ScalePolicyCoolDown": {
+            "Description": "The amount of time, in seconds, after a scaling activity completes before any further trigger-related scaling activities can start. (i.e. 300s = 5 min)",
+            "Type": "Number",
+            "Default": "300"
+        },
+        "ScalePolicyType": {
+            "Description": "Specifies whether the ScalingAdjustment is an absolute number or a percentage of the current capacity. Valid values are ChangeInCapacity, ExactCapacity, and PercentChangeInCapacity. (i.e. ChangeInCapacity)",
+            "Type": "String",
+            "Default": "ChangeInCapacity"
+        },
+        "ELBAlarmScaleUpEvaluationPeriods": {
+            "Description": "The number of periods over which data is compared to the specified threshold.",
+            "Type": "Number",
+            "Default": "2"
+        },
+        "ELBAlarmScaleDownEvaluationPeriods": {
+            "Description": "The number of periods over which data is compared to the specified threshold.",
+            "Type": "Number",
+            "Default": "2"
+        },
+        "ELBAlarmScaleUpPeriod": {
+            "Description": "The period in seconds over which the specified statistic is applied. (i.e. 60s = 1 min)",
+            "Type": "Number",
+            "Default": "300"
+        },
+        "ELBAlarmScaleDownPeriod": {
+            "Description": "The period in seconds over which the specified statistic is applied. (i.e. 60s = 1 min)",
+            "Type": "Number",
+            "Default": "900"
+        },
+        "ELBAlarmScaleUpStatistic": {
+            "Description": "The statistic to apply to the alarm's associated metric (i.e. Sum)",
+            "Type": "String",
+            "Default": "Average"
+        },
+        "ELBAlarmScaleDownStatistic": {
+            "Description": "The statistic to apply to the alarm's associated metric (i.e. Sum)",
+            "Type": "String",
+            "Default": "Average"
+        },
+		  "ELBAlarmScaleUpThreshold": {
+            "Description": "The value against which the specified statistic is compared. You need to update this based on data from your testing. If you set this too low, your environment will never scale, if its too high, it'll scale too frequently. Start with the example value and tweak as expected (i.e. 9000),",
+            "Type": "Number",
+            "Default": "40"
+        },
+        "ELBAlarmScaleDownThreshold": {
+            "Description": "The value against which the specified statistic is compared. You need to update this based on data from your testing. If you set this too low, your environment will never scale, if its too high, it'll scale too frequently. Start with the example value and tweak as expected (i.e. 9000),",
+            "Type": "Number",
+            "Default": "20"
+        },  
+	"TagArchPath": {
+          "Type": "String",
+          "Description": "Path name from a root component to this instance based on architectural is-part-of relationship.",
+		  "Default" : "test-tag-1"
+        },      
+		  "TagBilling": {
+            "Description": "Billing tag",
+            "Type": "String",
+            "Default": "unknown"
+        },
+        "TagBuildUserId": {
+            "Description": "Who built this stack?",
+            "Type": "String",
+            "Default": "ishant"
+        },
+        "TagClass": {
+            "Description": "Class Name",
+            "Type": "String",
+            "Default": "WebServer"
+        },
+        "TagComponent": {
+            "Description": "Product Component (i.e. Web-API)",
+            "Type": "String",
+            "Default": "App"
+        },
+       "TagCostCenter": {
+          "Type": "String",
+          "Description": "The costcenter of this resource. Format is comma separated text with one or two cost center numbers.",
+          "Default" : "12345677"
+        },
+        "TagEnvironment": {
+            "Description": "Product Environment Name (i.e. CC-STAGE-UE1-A)",
+            "Type": "String",
+            "Default": "QA"
+        },
+       
+	"TagLoadComment": {
+          "Type": "String",
+          "Description": "A test service"
+        },
+ 	"TagProduct": {
+            "Description": "Product Tag (i.e. Dooplo)",
+            "Type": "String",
+            "Default": "TEST"
+        },
+       "TagPlatformTech": {
+          "Type": "String",
+          "Description": "A comma-separated list of technologies used in the service. This is to give readers a general idea of what is in the service.",
+          "Default" : "java, tomcat, redis, Dynamo DB, Apache CXF, AWS SQS, AWS S3 encrypted bucket, log4j"
+        },
+        "TagOwner": {
+          "Type": "String",
+          "Description": "Identifies the owning organization.",
+		  "Default" : "Tech"
+        },
+        "TagRelease": {
+            "Description": "Product Release (i.e. 3.5)",
+            "Type": "String",
+            "Default": "unknown"
+        },
+        "TagStackName": {
+            "Description": "Name of this stack",
+            "Type": "String",
+            "Default": "TEST"
+        }
+    },
+    "Mappings": {
+        "AWSInstanceType2Arch": {
+            "t1.micro": {
+                "Arch": "64"
+            },
+            "m1.small": {
+                "Arch": "64"
+            },
+            "m1.large": {
+                "Arch": "64"
+            },
+            "m1.xlarge": {
+                "Arch": "64"
+            },
+            "m2.xlarge": {
+                "Arch": "64"
+            },
+            "m2.2xlarge": {
+                "Arch": "64"
+            },
+            "m2.4xlarge": {
+                "Arch": "64"
+            },
+            "c1.medium": {
+                "Arch": "32"
+            },
+            "c1.xlarge": {
+                "Arch": "64"
+            },
+            "c3.4xlarge": {
+                "Arch": "64"
+            },
+            "cc1.4xlarge": {
+                "Arch": "64"
+            },
+            "cc2.8xlarge": {
+                "Arch": "64"
+            }
+        },
+        "AWSRegionArch2AMI": {
+            "us-east-1": {
+                "32": "ami-1111111",
+                "64": "ami-1111111"
+            },
+            "us-west-1": {
+                "32": "ami-1111111",
+                "64": "ami-1111111"
+            },
+            "eu-west-1": {
+                "32": "ami-1111111",
+                "64": "ami-1111111"
+            },
+            "ap-southeast-1": {
+                "32": "ami-1111111",
+                "64": "ami-1111111"
+            },
+            "ap-northeast-1": {
+                "32": "ami-1111111",
+                "64": "ami-1111111"
+            }
+        }
+    },
+    "Resources": {
+        "ContainerLaunchConfiguration": {
+            "Type": "AWS::AutoScaling::LaunchConfiguration",
+            "Properties": {
+					 "AssociatePublicIpAddress" : "true",
+                "KeyName": {
+                    "Ref": "KeyPairName"
+                },
+                "SecurityGroups": {
+                    "Ref": "SecurityGroups"
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "ImageId": {
+                    "Ref": "AmazonMachineImageId"
+                },
+                "BlockDeviceMappings": [
+                    {
+                        "DeviceName": "/dev/sdb",
+                        "VirtualName": "ephemeral0"
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                  
+                                                    "#!/bin/bash","\n",
+                                                    "yum -y install httpd","\n",
+                                                     "echo 'Hello testing' > ","/var/www/html/index.html","\n",
+                                                      "service httpd restart",
+                               "\n" 
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "ContainerAutoScalingGroup": {
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "Properties": {
+                "AvailabilityZones": {
+                    "Ref": "AvailabilityZone"
+                },
+				"VPCZoneIdentifier" : { "Ref" : "prisubnets" },
+                "LaunchConfigurationName": {
+                    "Ref": "ContainerLaunchConfiguration"
+                },
+		"HealthCheckType": "ELB",
+		"HealthCheckGracePeriod": "600",		
+                "MinSize": {
+                    "Ref": "ASGMinSize"
+                },
+                "DesiredCapacity": {
+                    "Ref": "ASGDesiredCapacity"
+                },
+                "MaxSize": {
+                    "Ref": "ASGMaxSize"
+                },
+                "NotificationConfiguration": {
+                    "TopicARN": {
+                        "Fn::Join": [
+                            ":",
+                            [
+                                "arn:aws:sns",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                {
+                                    "Ref": "AWSAccountId"
+                                },
+                                {
+                                    "Ref": "ScalingSNSTopicName"
+                                }
+                            ]
+                        ]
+                    },
+                    "NotificationTypes": [
+                        "autoscaling:EC2_INSTANCE_LAUNCH",
+                        "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+                        "autoscaling:EC2_INSTANCE_TERMINATE",
+                        "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+                    ]
+                },
+                "LoadBalancerNames": [{"Ref": "ExternalELB"}],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "ChefEnv"
+                                    },
+                                    "_",
+                                    {
+                                        "Ref": "ChefRole"
+                                    },
+												"_",
+												"autoscaling",												
+                                    ""
+                                ]
+                            ]
+                        },
+                        "PropagateAtLaunch": "true"
+                    },
+                    {
+                        "Key": "Adobe:ArchPath",
+                        "Value": {
+			   "Ref": "TagArchPath"
+			},
+                        "PropagateAtLaunch": "true"
+                    },
+                    {
+                        "Key": "Adobe:Class",
+                        "Value": {
+			   "Ref": "TagClass"
+			},
+                        "PropagateAtLaunch": "true"
+                    },
+                    {
+                        "Key": "Adobe:CostCenter",
+                        "Value": {
+                            "Ref": "TagCostCenter"
+                        },
+                        "PropagateAtLaunch": "true"
+                    },
+                    {
+                        "Key": "Adobe:Environment",
+                        "Value": {
+                            "Ref": "TagEnvironment"
+                        },
+                        "PropagateAtLaunch": "true"
+                    },
+                   {
+                        "Key": "Adobe:LoadComment",
+                        "Value": {
+                            "Ref": "TagLoadComment"
+                        },
+                        "PropagateAtLaunch": "true"
+                    },
+
+
+                    {
+                        "Key": "Adobe:Owner",
+                        "Value": {
+                            "Ref": "TagOwner"
+                        },
+                        "PropagateAtLaunch": "true"
+                    },
+		    {
+                        "Key": "Adobe:PlatformTech",
+                        "Value": {
+                            "Ref": "TagPlatformTech"
+                        },
+                        "PropagateAtLaunch": "true"
+                    },
+                    {
+                        "Key": "release",
+                        "Value": {
+			   "Ref": "TagRelease"
+			},
+                        "PropagateAtLaunch": "true"
+                    },
+                    {
+                        "Key": "stackName",
+                        "Value": {
+			   "Ref": "TagStackName"
+			},
+                        "PropagateAtLaunch": "true"
+                    }
+                ]
+            }
+        },
+        "ScaleUpPolicy": {
+            "Type": "AWS::AutoScaling::ScalingPolicy",
+            "Properties": {
+                "AdjustmentType": "ChangeInCapacity",
+                "AutoScalingGroupName": {
+                    "Ref": "ContainerAutoScalingGroup"
+                },
+                "Cooldown": {
+                    "Ref": "ScalePolicyCoolDown"
+                },
+                "ScalingAdjustment": {
+                    "Ref": "ScalingAdjustmentAdjustUp"
+                }
+            }
+        },
+        "ScaleDownPolicy": {
+            "Type": "AWS::AutoScaling::ScalingPolicy",
+            "Properties": {
+                "AdjustmentType": "ChangeInCapacity",
+                "AutoScalingGroupName": {
+                    "Ref": "ContainerAutoScalingGroup"
+                },
+                "Cooldown": {
+                    "Ref": "ScalePolicyCoolDown"
+                },
+                "ScalingAdjustment": {
+                    "Ref": "ScalingAdjustmentAdjustDown"
+                }
+            }
+        },
+        "ELBAlarmScaleUp": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Description": "If the number of requests hitting the ELB exceeds our threshold, trigger our scale up policy",
+            "Properties": {
+                "AlarmDescription": {
+                    "Fn::Join": [
+                        " ",
+                        [
+                            "Scale up if the ",
+                            {
+                                "Ref": "ELBAlarmScaleUpStatistic"
+                            },
+                            " request count on the ELB over the given evaluation period of ",
+                            {
+                                "Ref": "ELBAlarmScaleUpPeriod"
+                            },
+                            " seconds is higher than the specified threshold of ",
+                            {
+                                "Ref": "ELBAlarmScaleUpThreshold"
+                            }
+                        ]
+                    ]
+                },
+                "AlarmActions": [
+                    {
+                        "Ref": "ScaleUpPolicy"
+                    },
+                    {
+                        "Fn::Join": [
+                            ":",
+                            [
+                                "arn:aws:sns",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                {
+                                    "Ref": "AWSAccountId"
+                                },
+                                {
+                                    "Ref": "ScalingSNSTopicName"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "EvaluationPeriods": {
+                    "Ref": "ELBAlarmScaleUpEvaluationPeriods"
+                },
+                "Statistic": {
+                    "Ref": "ELBAlarmScaleUpStatistic"
+                },
+                "Threshold": {
+                    "Ref": "ELBAlarmScaleUpThreshold"
+                },
+                "Period": {
+                    "Ref": "ELBAlarmScaleUpPeriod"
+                },
+                "Namespace": "AWS/EC2",
+                "Dimensions": [{ "Name": "AutoScalingGroupName", "Value": { "Ref": "ContainerAutoScalingGroup" } }],
+                "ComparisonOperator": "GreaterThanThreshold",
+                "MetricName": "CPUUtilization"
+            }
+        },
+        "ELBAlarmScaleDown": {
+            "Type": "AWS::CloudWatch::Alarm",
+            "Description": "If the number of requests hitting the ELB exceeds our threshold, trigger our scale Down policy",
+            "Properties": {
+                "AlarmDescription": {
+                    "Fn::Join": [
+                        " ",
+                        [
+                            "Scale Down if the ",
+                            {
+                                "Ref": "ELBAlarmScaleDownStatistic"
+                            },
+                            " request count on the ELB over the given evaluation period of ",
+                            {
+                                "Ref": "ELBAlarmScaleDownPeriod"
+                            },
+                            " seconds is higher than the specified threshold of ",
+                            {
+                                "Ref": "ELBAlarmScaleDownThreshold"
+                            }
+                        ]
+                    ]
+                },
+                "AlarmActions": [
+                    {
+                        "Ref": "ScaleDownPolicy"
+                    },
+                    {
+                        "Fn::Join": [
+                            ":",
+                            [
+                                "arn:aws:sns",
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                {
+                                    "Ref": "AWSAccountId"
+                                },
+                                {
+                                    "Ref": "ScalingSNSTopicName"
+                                }
+                            ]
+                        ]
+                    }
+                ],
+                "EvaluationPeriods": {
+                    "Ref": "ELBAlarmScaleDownEvaluationPeriods"
+                },
+                "Statistic": {
+                    "Ref": "ELBAlarmScaleDownStatistic"
+                },
+                "Threshold": {
+                    "Ref": "ELBAlarmScaleDownThreshold"
+                },
+                "Period": {
+                    "Ref": "ELBAlarmScaleDownPeriod"
+                },
+                "Namespace": "AWS/EC2",
+                "Dimensions": [{ "Name": "AutoScalingGroupName", "Value": { "Ref": "ContainerAutoScalingGroup" } }],
+                "ComparisonOperator": "LessThanThreshold",
+                "MetricName": "CPUUtilization"
+            }
+        }
+    },
+
+    "Outputs": {
+        "AutoScalingGroup": {
+            "Value": {
+                "Ref": "ContainerAutoScalingGroup"
+            },
+            "Description": "The Auto Scaling Group (ASG) created from this stack."
+        },
+        "LoadBalancer": {
+            "Value": {
+                "Ref": "AWS::Region"
+            },
+            "Description": "The region this stack was created in."
+        },
+        "Region": {
+            "Value": {
+                "Ref": "AWS::Region"
+            },
+            "Description": "The name of the load balancer this stack attaches to by default."
+        },
+        "ScalePolicyCoolDown": {
+            "Value": {
+                "Ref": "ScalePolicyCoolDown"
+            },
+            "Description": "The number of seconds before another autoscaling policy is triggered."
+        }
+    }
+}
