@@ -210,7 +210,8 @@
        
 	"TagLoadComment": {
           "Type": "String",
-          "Description": "A test service"
+          "Description": "A test service",
+		 "Default": "QA"
         },
  	"TagProduct": {
             "Description": "Product Tag (i.e. Dooplo)",
