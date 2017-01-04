@@ -169,7 +169,7 @@
       "Properties" : {
         "UserData" : { "Fn::Base64" : { "Fn::Join" : [ "", [                                                                                                                     
                                                     "yum install -y httpd","\n",
-                                                     "echo 'Hello testing' >","/var/www/html/index.html","\n",
+                                                     "echo 'Hello testing' > ","/var/www/html/index.html","\n",
                                                       "service httpd restart"  ,
                                 "\n",
           "IPAddress=", {"Ref" : "IPAddress"},"\n" ]]}},
