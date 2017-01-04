@@ -169,11 +169,10 @@
       "Properties" : {
         "UserData" : { "Fn::Base64" : { "Fn::Join" : [ "", [  
                                                     "#!/bin/bash","\n",
-                                                    "yum install -y httpd","\n",
+                                                    "yum -y install httpd","\n",
                                                      "echo 'Hello testing' > ","/var/www/html/index.html","\n",
-                                                      "service httpd restart"  ,
-                                "\n",
-          "IPAddress=", {"Ref" : "IPAddress"},"\n" ]]}},
+                                                      "service httpd restart",
+                               "\n" ]]}},
         "InstanceType" : { "Ref" : "InstanceType" },
         "SecurityGroups" : [ { "Ref" : "InstanceSecurityGroup" } ],
         "KeyName" : { "Ref" : "KeyName" },
