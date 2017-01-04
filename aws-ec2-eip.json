@@ -167,7 +167,8 @@
     "EC2Instance" : {
       "Type" : "AWS::EC2::Instance",
       "Properties" : {
-        "UserData" : { "Fn::Base64" : { "Fn::Join" : [ "", [                                                                                                                     
+        "UserData" : { "Fn::Base64" : { "Fn::Join" : [ "", [  
+                                                    "#!/bin/bash","\n",
                                                     "yum install -y httpd","\n",
                                                      "echo 'Hello testing' > ","/var/www/html/index.html","\n",
                                                       "service httpd restart"  ,
