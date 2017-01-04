@@ -10,7 +10,7 @@
         "AWSAccountId": {
             "Description": "The Amazon AWS Account Id for this group (i.e. 303225888019)",
             "Type": "String",
-            "Default": "12345"
+            "Default": "679179179105"
         },
         "AvailabilityZone": {
             "Description": "Availability zone to launch instances in. Note that this can vary per account (i.e. us-east-1a,us-east-1b,us-east-1d)",
