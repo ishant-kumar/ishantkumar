@@ -15,7 +15,7 @@
         "AvailabilityZone": {
             "Description": "Availability zone to launch instances in. Note that this can vary per account (i.e. us-east-1a,us-east-1b,us-east-1d)",
             "Type": "CommaDelimitedList",
-            "Default": "us-east-1b,us-east-1c,us-east-1a,us-east-1d"
+            "Default": "us-east-1b,us-east-1c,us-east-1e,us-east-1d"
         },
         "ChefAWSAccessKey": {
             "Description": "IAM AWS access key with enough rights to access ChefBucket",
@@ -28,9 +28,9 @@
             "Default": "___DO NOT NEED USING ROLES___"
         },
         "ChefBucket": {
-            "Description": "S3 bucket that stores the required Chef-related keys (i.e. adobe-cloudops-cc-chef-ue1)",
+            "Description": "S3 bucket that stores the required Chef-related keys (i.e. testing-cloudops-cc-chef-ue1)",
             "Type": "String",
-            "Default": "adobe-cloudops-psdkapi-chef-ue1"
+            "Default": "testing-cloudops-psdkapi-chef-ue1"
         },
         "ChefEnv": {
             "Description": "Default Chef Environment of this instance (i.e. CC-STAGE-UE1-A)",
@@ -38,9 +38,9 @@
             "Default": "PSDKAPI-STAGE-UE1-A"
         },
         "ChefOrg": {
-            "Description": "Default Chef Organization of this instance (i.e. adobestormcloud)",
+            "Description": "Default Chef Organization of this instance (i.e. testingstormcloud)",
             "Type": "String",
-            "Default": "adobepsdkapi"
+            "Default": "testingpsdkapi"
         },
         "ChefRole": {
             "Description": "Default Chef Role of this instance (i.e. Web)",
@@ -93,7 +93,7 @@
             "Default": "test-ue1-autoscaling"
         },
         "SecurityGroups": {
-            "Description": "Security group that is used by this group. By default, it should belong to at least 4 securty groups (i.e. adobe-ssh, stormcloud, stormcloud-ccapi, stormcloud-ccweb, stormcloud-common)",
+            "Description": "Security group that is used by this group. By default, it should belong to at least 4 securty groups (i.e. testing-ssh, stormcloud, stormcloud-ccapi, stormcloud-ccweb, stormcloud-common)",
             "Type": "CommaDelimitedList",
             "Default": "sg-eec1af93"
         },
@@ -108,7 +108,7 @@
             "Default": "1"
         },
         "ASGMaxSize": {
-            "Description": "Auto Scaling Group Maximum size of the stack (i.e. 1). See https://zerowing.corp.adobe.com/display/saas/App+Management+-+AWS+Service+Limits and make sure to adjust your limits",
+            "Description": "Auto Scaling Group Maximum size of the stack (i.e. 1). See https://zerowing.corp.testing.com/display/saas/App+Management+-+AWS+Service+Limits and make sure to adjust your limits",
             "Type": "Number",
             "Default": "1"
         },
@@ -411,35 +411,35 @@
                         "PropagateAtLaunch": "true"
                     },
                     {
-                        "Key": "Adobe:ArchPath",
+                        "Key": "testing:ArchPath",
                         "Value": {
 			   "Ref": "TagArchPath"
 			},
                         "PropagateAtLaunch": "true"
                     },
                     {
-                        "Key": "Adobe:Class",
+                        "Key": "testing:Class",
                         "Value": {
 			   "Ref": "TagClass"
 			},
                         "PropagateAtLaunch": "true"
                     },
                     {
-                        "Key": "Adobe:CostCenter",
+                        "Key": "testing:CostCenter",
                         "Value": {
                             "Ref": "TagCostCenter"
                         },
                         "PropagateAtLaunch": "true"
                     },
                     {
-                        "Key": "Adobe:Environment",
+                        "Key": "testing:Environment",
                         "Value": {
                             "Ref": "TagEnvironment"
                         },
                         "PropagateAtLaunch": "true"
                     },
                    {
-                        "Key": "Adobe:LoadComment",
+                        "Key": "testing:LoadComment",
                         "Value": {
                             "Ref": "TagLoadComment"
                         },
@@ -448,14 +448,14 @@
 
 
                     {
-                        "Key": "Adobe:Owner",
+                        "Key": "testing:Owner",
                         "Value": {
                             "Ref": "TagOwner"
                         },
                         "PropagateAtLaunch": "true"
                     },
 		    {
-                        "Key": "Adobe:PlatformTech",
+                        "Key": "testing:PlatformTech",
                         "Value": {
                             "Ref": "TagPlatformTech"
                         },
