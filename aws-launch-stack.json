@@ -362,31 +362,7 @@
                 "MaxSize": {
                     "Ref": "ASGMaxSize"
                 },
-                "NotificationConfiguration": {
-                    "TopicARN": {
-                        "Fn::Join": [
-                            ":",
-                            [
-                                "arn:aws:sns",
-                                {
-                                    "Ref": "AWS::Region"
-                                },
-                                {
-                                    "Ref": "AWSAccountId"
-                                },
-                                {
-                                    "Ref": "ScalingSNSTopicName"
-                                }
-                            ]
-                        ]
-                    },
-                    "NotificationTypes": [
-                        "autoscaling:EC2_INSTANCE_LAUNCH",
-                        "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
-                        "autoscaling:EC2_INSTANCE_TERMINATE",
-                        "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
-                    ]
-                },
+               
                 "LoadBalancerNames": [{"Ref": "ExternalELB"}],
                 "Tags": [
                     {
