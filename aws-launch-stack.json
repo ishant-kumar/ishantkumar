@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "PSDKAPI STAGE Web Stack in VPC",
+    "Description": "Sample Web Stack in VPC",
     "Parameters": {
         "AmazonMachineImageId": {
             "Description": "Default AMI to use when spinning up instance (i.e. : ami-a9741ac0). Make sure that this account has rights to that AMI",
